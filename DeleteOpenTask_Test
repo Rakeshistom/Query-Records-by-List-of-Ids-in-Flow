@@ -1,0 +1,92 @@
+@isTest
+public class DeleteOpenTask_Test {
+    @testSetup
+    static void setup() {
+        
+        //Adjust the record type based on yoru setting
+        RecordType rt = [SELECT Id FROM RecordType WHERE SObjectType = 'Opportunity' AND developerName = 'Manufacturing'];
+        
+        Product2 product = new Product2();
+        product.Name = 'Test Product ';
+        product.ProductCode = '123';
+        product.IsActive = true;
+        insert product;
+        
+        PricebookEntry pbe = new PricebookEntry();
+        pbe.Pricebook2Id = Test.getStandardPricebookId();
+        pbe.Product2Id = product.Id;
+        pbe.IsActive = true;
+        pbe.UnitPrice = 10;
+        insert pbe;
+        
+        Opportunity op = new Opportunity();
+        op.Name = 'Test';
+        op.RecordTypeId = rt.Id;
+        op.Type = 'Value Proposition';
+        op.Amount= 1200;
+        op.CloseDate = Date.today().addDays(2);
+        op.StageName = 'Created';
+        
+        insert op;
+        
+        Task t = new Task();
+        t.OwnerId = UserInfo.getUserId();
+        t.Subject='Call Andy';
+        t.Status='Not Started';
+        t.Priority='Normal';
+        t.whatid=op.id;
+        
+        Quote quote = new Quote();
+        quote.OpportunityId = op.Id;
+        quote.Name = 'TestQuote';
+        quote.ExpirationDate = Date.today().addDays(5);
+        quote.Status = 'Draft';
+        quote.Pricebook2Id = Test.getStandardPricebookId();
+        insert quote;
+        
+        QuoteLineItem qli = new QuoteLineItem();
+        qli.QuoteId = quote.Id;
+        qli.Quantity = 2;
+        qli.PricebookEntryId = pbe.Id;
+        qli.UnitPrice = 20;
+        insert qli;
+        
+        Task t1 = new Task();
+        t1.OwnerId = UserInfo.getUserId();
+        t1.Subject='Call pre-sales Team';
+        t1.Status='Not Started';
+        t1.Priority='Normal';
+        t1.whatid=quote.id;
+        
+        Quote quote1 = new Quote();
+        quote1.OpportunityId = op.Id;
+        quote1.Name = 'TestQuote';
+        quote1.ExpirationDate = Date.today().addDays(5);
+        quote1.Status = 'Draft';
+        quote1.Pricebook2Id = Test.getStandardPricebookId();
+        insert quote1;
+        
+        QuoteLineItem qli1 = new QuoteLineItem();
+        qli1.QuoteId = quote1.Id;
+        qli1.Quantity = 2;
+        qli1.PricebookEntryId = pbe.Id;
+        qli1.UnitPrice = 20;
+        insert qli1;
+        
+        Task t2 = new Task();
+        t2.OwnerId = UserInfo.getUserId();
+        t2.Subject='Call pre-sales Team';
+        t2.Status='Not Started';
+        t2.Priority='Normal';
+        t2.whatid=quote1.id;
+    }
+    
+    @isTest
+    static void deleteTask () {
+        
+        opportunity opportunity = [SELECT Id, stageName FROM opportunity LIMIT 1];
+        
+        opportunity.stageName = 'Closed Lost';
+        update opportunity;
+    }
+}
