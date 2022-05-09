@@ -1,0 +1,41 @@
+public class DeleteOpenTasks
+{
+    @InvocableMethod(label='Delete Open Tasks' 
+                     description='Delete the list of open tasks corresponding to the specified IDs.' 
+                     category='Task'
+                     callout =false)
+    
+    public static void deleteTask(List<Request> requests)
+    {
+        List<Id> whatId = new list<Id>();
+        List<Id> whoId = new list<Id>();
+        
+        for (Request req: requests){
+            for (Id recordId : req.RecordIds) {
+                If(recordId.getSobjectType()== Schema.Contact.SObjectType || recordId.getSobjectType()==Schema.Lead.SObjectType)
+                {
+                    whoId.add(recordId);
+                }
+                else
+                {
+                    whatId.add(recordId);
+                }
+            }
+        }
+        
+        List<Task> tasks =[select id from Task
+                           where (WhatId IN :whatId
+                                  OR WhoId IN :whoId)
+                           and Status != 'Completed'];
+        
+        If(tasks.size()>0){
+            delete tasks;
+            Database.emptyRecycleBin(tasks); 
+        }
+    }
+    
+    public class Request {
+        @InvocableVariable(label = 'Record Ids' description= 'Specify the record Ids for which you want to delete open tasks' required = true)
+        public List<Id> RecordIds;
+    }
+}
